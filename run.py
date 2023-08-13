@@ -59,6 +59,7 @@ class User :
                             continue        
         except FileNotFoundError:
              print(f"User under the ({username}) username was not found. Please create an account.\n")
+             return create_user()
         except Exception as e:
             print(f"An errorr occured: {e}\n")
 
@@ -67,18 +68,30 @@ def handle_input(input, username):
     Function for handling all of the user inputs
     """
     if isinstance(input, User):
-        return
+        return print("User found!\n")
     elif input == "again":
         password = input("Password:\n")
-        return password
+        user = User.load_from(username, password)
     elif input == "delete":
         file_path = os.path.join(FOLDER_PATH, username) + ".pkl"
         os.remove(file_path)
         print("Account has been successfully deleted.")
-        return
+        main()
     elif input == "new":
-        create_user()
+        return create_user()
 
+def create_user():
+    """ 
+    Creates a new instance of the User class 
+    """
+    print("Lets get you started!\n")
+    username = input("How would you like to be called? \n").lower()
+    password = input("Your password : \n").lower()
+    print("Great!\nCreating an account....\n")
+    new_user = User(username, password)
+    new_user.save_to()
+    print("Account created!\n")
+    return new_user
     
 def main():
     print("Hello, welcome to Password Generator\n\n")
@@ -90,7 +103,8 @@ def main():
             username = input("Username: \n").lower()
             password = input("Password: \n").lower()
             user = User.load_from(username, password)
-            print(f"Welcome back {username}!")
+            handle_input(user, username)
+            print(f"Welcome {username}!")
             break     
         elif answer == "create":
             new_user = create_user()

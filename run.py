@@ -1,3 +1,13 @@
-# Your code goes here.
-# You can delete these comments, but do not change the name of this file
-# Write your code to expect a terminal of 80 characters wide and 24 rows high
+import pickle
+import hashlib
+import os
+
+class User : 
+
+    def __init__(self, username, password):
+        """
+        Creates an instance of user class
+        """
+        self.username = username
+        self.password = password
+        self.filename = f"{username}.pkl"

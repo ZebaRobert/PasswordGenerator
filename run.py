@@ -14,14 +14,14 @@ class User :
         self.password = password
         self.filename = f"{username}.pkl"
 
-    def save_to(self, filename, folder_path):
+    def save_to(self):
         """
         Saves an instance of the class inside users folder
         """
         try:
-            if not os.path.exists(folder_path):
-                os.makedirs(folder_path)
-            file_path = os.path.join(folder_path, filename)
+            if not os.path.exists(FOLDER_PATH):
+                os.makedirs(FOLDER_PATH)
+            file_path = os.path.join(FOLDER_PATH, self.filename)
             with open(file_path, "wb") as file:
                 pickle.dump(self, file)
         except FileExistsError:
@@ -30,33 +30,57 @@ class User :
             print(f"An errorr occured: {e}\n")
     
     @classmethod
-    def load_from(cls, folder_path, username, password):
+    def load_from(cls, username, password):
         """
         Loads an instance of the class user from the users folder
         """
         try:
-            if not os.path.exists(folder_path):
-                os.makedirs(folder_path)
-            file_path = os.path.join(folder_path, username) + ".pkl"
+            if not os.path.exists(FOLDER_PATH):
+                os.makedirs(FOLDER_PATH)
+            file_path = os.path.join(FOLDER_PATH, username) + ".pkl"
             with open(file_path, "rb") as file:
                 saved_data = pickle.load(file)
-                user_password = saved_data.get("password")
+                user_password = saved_data.password
                 if password == user_password:
                     return saved_data
                 else:
                     retry_count = 3
-                    while retry_count > 0:
-                        retry = input(f"Incorrect password. {retry_count} attempts remaining. Please try again:\n")
-                        saved_data = User.load_from(FOLDER_PATH, username, retry)
-                        if saved_data is not None:
+                    while True:
+                        retry = input(f"Incorrect password. Please try again:\n")
+                        if retry == user_password:
                             return saved_data
-                        retry_count -= 1
-                    print("Maximum password attempts made. Please create a new account\n")
-                    
+                        else:
+                            retry_count -= 1
+                            if retry_count == 0:
+                                print("If you are not able to log in to your account it can be deleted for safety purposes.\n")
+                                print("Would you like to try again, delete your account or create a new account?\nagain/delete/new\n")
+                                answer =  input("What will it be? :\n")
+                                return answer
+                            continue        
         except FileNotFoundError:
              print(f"User under the ({username}) username was not found. Please create an account.\n")
         except Exception as e:
             print(f"An errorr occured: {e}\n")
 
-            
+def handle_input(input, username):
+    """
+    Function for handling all of the user inputs
+    """
+    if isinstance(input, User):
+        return
+    elif input == "again":
+        password = input("Password:\n")
+        return password
+    elif input == "delete":
+        file_path = os.path.join(FOLDER_PATH, username) + ".pkl"
+        os.remove(file_path)
+        print("Account has been successfully deleted.")
+        return
+    elif input == "new":
+        create_user()
         
+    
+
+user = User.load_from("robert", "41115")
+print(user.username, user.password)            
+

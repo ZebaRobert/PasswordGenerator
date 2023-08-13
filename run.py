@@ -78,9 +78,28 @@ def handle_input(input, username):
         return
     elif input == "new":
         create_user()
-        
-    
 
-user = User.load_from("robert", "41115")
-print(user.username, user.password)            
+    
+def main():
+    print("Hello, welcome to Password Generator\n\n")
+    print("If you have an account, please login. Otherwise please create a new account.\n")
+    print("create / login\n")
+    answer = input("What would you like to do? \n")
+    while True:
+        if answer == "login":
+            username = input("Username: \n").lower()
+            password = input("Password: \n").lower()
+            user = User.load_from(username, password)
+            print(f"Welcome back {username}!")
+            break     
+        elif answer == "create":
+            new_user = create_user()
+            break 
+        else:
+            print(f"{answer.lower()} is not an option. Please try again.")
+            continue
+    return
+
+main()
+
 

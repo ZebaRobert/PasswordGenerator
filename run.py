@@ -24,8 +24,6 @@ class User :
             file_path = os.path.join(FOLDER_PATH, self.filename)
             with open(file_path, "wb") as file:
                 pickle.dump(self, file)
-        except FileExistsError:
-             print(f"User already exists under ({self.username}) username. Please try to login\n")
         except Exception as e:
             print(f"An errorr occured: {e}\n")
     
@@ -41,51 +39,80 @@ class User :
             with open(file_path, "rb") as file:
                 saved_data = pickle.load(file)
                 user_password = saved_data.password
-                if password == user_password:
-                    return saved_data
-                else:
-                    retry_count = 3
-                    while True:
-                        retry = input(f"Incorrect password. Please try again:\n")
-                        if retry == user_password:
-                            return saved_data
-                        else:
-                            retry_count -= 1
-                            if retry_count == 0:
-                                print("If you are not able to log in to your account it can be deleted for safety purposes.\n")
-                                print("Would you like to try again, delete your account or create a new account?\nagain/delete/new\n")
-                                answer =  input("What will it be? :\n")
-                                return answer
-                            continue        
+                retry_count = 2
+                while password != user_password:
+                    if retry_count == 0:                        
+                            print("If you are not able to log in to your account it can be deleted for safety purposes.\n")
+                            print("Would you like to try again, delete your account or create a new account?\nagain/delete/new\n")
+                            answer =  input("What will it be? :\n").lower()
+                            if answer == "delete":
+                                file.close()
+                                return handle_input(answer)
+                            return handle_input(answer)      
+                    else:
+                        password = input("Incorrect password! Please try again:\n")
+                        retry_count -= 1
+                return saved_data
         except FileNotFoundError:
-             print(f"User under the ({username}) username was not found. Please create an account.\n")
-             return create_user()
+             print(f"User under the ({username}) username was not found. Would you like to create a new account or try to login again?.\n")
+             response = input("login/new : \n").lower()
+             handle_input(response)
         except Exception as e:
             print(f"An errorr occured: {e}\n")
 
-def handle_input(input, username):
+def handle_input(answer, username = None):
     """
     Function for handling all of the user inputs
     """
-    if isinstance(input, User):
-        return print("User found!\n")
-    elif input == "again":
-        password = input("Password:\n")
-        user = User.load_from(username, password)
-    elif input == "delete":
-        file_path = os.path.join(FOLDER_PATH, username) + ".pkl"
-        os.remove(file_path)
-        print("Account has been successfully deleted.")
+    retry = answer
+    while retry != "stop":
+        if answer == "login" or answer == "again":
+            username = input("Username: \n").lower()
+            password = input("Password: \n").lower()
+            user = User.load_from(username, password)
+            return user
+        elif answer == "create" or answer == "new":
+            new_user = create_user()
+            return new_user
+        elif answer == "delete":
+            while True:
+                try:
+                    print("Please confirme the user you want to delete.\n")
+                    username = input("Username: \n")
+                    if username == "stop":
+                        main()
+                    file_path = os.path.join(FOLDER_PATH, username) + ".pkl"
+                    os.remove(file_path)
+                    print("Account has been successfully deleted.\n")
+                    main()
+                except FileNotFoundError:
+                    print("This user doesnt exist. Please try again.\nIf you cant remeber your username, type in 'stop' to go back to the Main Menu.")
+                except Exception as e:
+                    print(f"An error occured: {e}")
+        else:
+            retry = None
+            print(f"{answer} is not a valid option.\n")
+            if retry != answer:
+                print("If you would like to go back to the Main Menu. Type in 'stop'.\n")
+            retry = input("Please try again: \n").lower()
+    if retry == "stop":
+        retry = None
         main()
-    elif input == "new":
-        return create_user()
+
 
 def create_user():
     """ 
     Creates a new instance of the User class 
     """
     print("Lets get you started!\n")
-    username = input("How would you like to be called? \n").lower()
+    while True:
+        username = input("How would you like to be called? \n").lower()
+        path = os.path.join(FOLDER_PATH, username) + ".pkl"
+        if os.path.exists(path):
+            print("Sorry username is already taken. Try another one!")
+            continue
+        else:
+            break
     password = input("Your password : \n").lower()
     print("Great!\nCreating an account....\n")
     new_user = User(username, password)
@@ -94,26 +121,12 @@ def create_user():
     return new_user
     
 def main():
-    print("Hello, welcome to Password Generator\n\n")
+    print("\nHello, welcome to Password Generator\n")
     print("If you have an account, please login. Otherwise please create a new account.\n")
     print("create / login\n")
-    answer = input("What would you like to do? \n")
-    while True:
-        if answer == "login":
-            username = input("Username: \n").lower()
-            password = input("Password: \n").lower()
-            user = User.load_from(username, password)
-            handle_input(user, username)
-            print(f"Welcome {username}!")
-            break     
-        elif answer == "create":
-            new_user = create_user()
-            break 
-        else:
-            print(f"{answer.lower()} is not an option. Please try again.")
-            continue
+    answer = input("What would you like to do? \n").lower()
+    user = handle_input(answer)
     return
 
 main()
-
 

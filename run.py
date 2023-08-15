@@ -3,6 +3,7 @@ import hashlib
 import os
 
 FOLDER_PATH = 'users'
+user = None
 
 class User : 
 
@@ -60,20 +61,27 @@ class User :
         except Exception as e:
             print(f"An errorr occured: {e}\n")
 
+    gen_passwords = {
+        "test1" : "test 1-1",
+        "test2" : "test 2-2",
+        "test3" : "test 3-3"
+    }
+
 def handle_input(answer, username = None):
     """
     Function for handling all of the user inputs
     """
+    global user
     retry = answer
     while retry != "stop":
         if answer == "login" or answer == "again":
             username = input("Username: \n").lower()
-            password = input("Password: \n").lower()
+            password = input("Password: \n").lower() 
             user = User.load_from(username, password)
             return user
         elif answer == "create" or answer == "new":
-            new_user = create_user()
-            return new_user
+            user = create_user()
+            return user
         elif answer == "delete":
             while True:
                 try:
@@ -89,13 +97,20 @@ def handle_input(answer, username = None):
                     print("This user doesnt exist. Please try again.\nIf you cant remeber your username, type in 'stop' to go back to the Main Menu.")
                 except Exception as e:
                     print(f"An error occured: {e}")
+        elif answer == "saved":
+            print("Which password would you like to retreve? For which platform?\n")
+            print("These are the platforms you have generated a password for : \n")
+            for key in user.gen_passwords.keys():
+                print(f"{key}")
+            platform = input("Your choise: \n")
+            print(f"Your password for {platform} is:\n{user.gen_passwords.get(platform)}")
+            return
         else:
-            retry = None
-            print(f"{answer} is not a valid option.\n")
-            if retry != answer:
-                print("If you would like to go back to the Main Menu. Type in 'stop'.\n")
+            print(f"{answer} is not a valid option.\n")           
+            print("If you would like to go back to the Main Menu. Type in 'stop'.\n")
             retry = input("Please try again: \n").lower()
     if retry == "stop":
+        user = None
         retry = None
         main()
 
@@ -104,6 +119,7 @@ def create_user():
     """ 
     Creates a new instance of the User class 
     """
+    global user
     print("Lets get you started!\n")
     while True:
         username = input("How would you like to be called? \n").lower()
@@ -125,10 +141,10 @@ def create_user():
             print("Password accepted.\n")
             break 
     print("Great!\nCreating an account....\n")
-    new_user = User(username, password)
-    new_user.save_to()
+    user = User(username, password)
+    user.save_to()
     print("Account created!\n")
-    return new_user
+    return user
     
 def main():
     print("\nHello, welcome to Password Generator\n")
@@ -136,8 +152,14 @@ def main():
     print("create / login\n")
     answer = input("What would you like to do? \n").lower()
     user = handle_input(answer)
-    print(f"Hello {user.username.upper()}.\nWhat would you like to do next?\n")
-    print("Avable options: \n1. Display saved password: saved\n2. Generate new password: generate\n3. Exit the program: exit")
+    while True:
+        print(f"Hello {user.username}.\nWhat would you like to do next?\n")
+        print("Avable options: \n1. Display saved password: saved\n2. Generate new password: generate\n3. Exit the program: exit\n4. Return to main menu: main: stop\n")
+        answer = input("Keyword : \n")
+        if answer == "exit":
+            print(f"Goodbye, {user.username}")
+            break
+        handle_input(answer)
     return
 
 main()

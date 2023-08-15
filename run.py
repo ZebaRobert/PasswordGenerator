@@ -109,11 +109,21 @@ def create_user():
         username = input("How would you like to be called? \n").lower()
         path = os.path.join(FOLDER_PATH, username) + ".pkl"
         if os.path.exists(path):
-            print("Sorry username is already taken. Try another one!")
+            print("Sorry username is already taken. Try another one!\n")
+            continue
+        elif username.strip() == "" or username == None:
+            print("Invalid input, please try again.\n")
             continue
         else:
+            print("Username accepted.\n")
             break
-    password = input("Your password : \n").lower()
+    while True:
+        password = input("Your password: ").lower()
+        if password == None or password.strip() == "":
+            print("Password cannot be empty or only spaces. Please try again.\n")
+        else:
+            print("Password accepted.\n")
+            break 
     print("Great!\nCreating an account....\n")
     new_user = User(username, password)
     new_user.save_to()
@@ -126,6 +136,8 @@ def main():
     print("create / login\n")
     answer = input("What would you like to do? \n").lower()
     user = handle_input(answer)
+    print(f"Hello {user.username.upper()}.\nWhat would you like to do next?\n")
+    print("Avable options: \n1. Display saved password: saved\n2. Generate new password: generate\n3. Exit the program: exit")
     return
 
 main()

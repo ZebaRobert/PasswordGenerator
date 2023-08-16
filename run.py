@@ -17,6 +17,7 @@ class User:
         self.username = username
         self.password = password
         self.filename = f"{username}.pkl"
+        self.gen_passwords = {}
 
     def save_to(self):
         """
@@ -55,56 +56,52 @@ class User:
                         answer = input("What will it be? :\n").lower()
                         if answer == "delete":
                             file.close()
-                        return handle_input(answer)
+                        return handle_input(answer, 1)
                     else:
                         password = input("Incorrect password! Please try again:\n")
                         retry_count -= 1
-                file.close()
-            return saved_data
+                return saved_data
         except FileNotFoundError:
             print(
                 f"\nUser under the ({username}) username was not found. Would you like to create a new account or try to login again?.\n"
             )
             response = input("login/new : \n").lower()
-            handle_input(response)
+            return handle_input(response)
         except Exception as e:
             print(f"\nAn errorr occured: {e}\n")
 
-    gen_passwords = {}
 
-
-def handle_input(answer,stage = 0 , username=None):
+def handle_input(answer, stage=0, username=None):
     """
     Function for handling all of the user inputs
     """
     global user
-    retry = answer
     if stage == 0:
-        while retry != "exit":
+        while answer != "exit":
             if answer == "login":
                 username = input("Username: \n").lower()
                 password = input("Password: \n").lower()
                 user = User.load_from(username, password)
                 return user
-            elif answer == "create":
+            elif answer == "create" or answer == "new":
                 user = create_user()
-                return user 
-            else:  
+                return user
+            else:
                 print(f"\n{answer} is not a valid option.\n")
-                retry = input("Please try again: \n").lower()
-        raise SystemExit        
+                answer = input("Please try again: \n").lower()
+        raise SystemExit
     elif stage == 1:
         if answer == "delete":
             while True:
                 try:
                     print("\nPlease confirme the user you want to delete.\n")
                     username = input("Username: \n")
-                    retry = username
-                    if retry == "exit":
+                    if username == "exit" or username == "stop":
                         break
                     file_path = os.path.join(FOLDER_PATH, username) + ".pkl"
-                    os.remove(file_path)                        
+                    os.remove(file_path)
                     print("Account has been successfully deleted.\n")
+                    break
                 except FileNotFoundError:
                     print(
                         "\nThis user doesnt exist.\nIf you cant remeber your username, type in 'stop' to go back to the Main Menu or 'exit' to close the program."
@@ -118,17 +115,25 @@ def handle_input(answer,stage = 0 , username=None):
         elif answer == "new":
             user = create_user()
             return user
-        else:  
+        elif answer == "again":
+            username = input("Username: \n").lower()
+            password = input("Password: \n").lower()
+            user = User.load_from(username, password)
+            return user
+        else:
             print(f"\n{answer} is not a valid option.\n")
             print("If you would like to go back to the Main Menu. Type in 'stop'.\n")
-            retry = input("Please try again: \n").lower()   
+            retry = input("Please try again: \n").lower()
     elif stage == 2:
         if answer == "saved":
             if len(user.gen_passwords) == 0:
                 print("\nNo saved passwords found. Lets change that!\n")
                 new_entry = generate_password()
+                if new_entry == "stop":
+                    return
                 print("\nUpdating data base...\n")
                 user.gen_passwords.update(new_entry)
+                user.save_to()
                 print("Data base updated successfully!\n")
                 return
             else:
@@ -145,25 +150,32 @@ def handle_input(answer,stage = 0 , username=None):
                 return
         elif answer == "generate":
             new_entry = generate_password()
+            if new_entry == "stop":
+                return
             print("\nUpdating data base...\n")
             user.gen_passwords.update(new_entry)
+            user.save_to()
             print("Data base updated successfully!\n")
             return
         elif answer == "exit":
             raise SystemExit
         elif answer == "stop":
-            display_main_menu()
+            user.save_to()
+            return
+        else:
+            print(f"\n{answer} is not a valid option.\n")
 
 
 def display_main_menu():
     print("\nHello, welcome to Password Generator\n")
     print(
-        "If you have an account, please login. Otherwise please create a new account.\n"
+        "If you have an account, please login. Otherwise please create a new account.At any point in the program you are able to type in 'exit' or 'stop'. Exit will close the program all toghether while Stop will bring you to the Main menu. Few exeptions are as follows: 1. Exit will not be a valid option during password input 2. Stop is not a valid option while you are in the main menu. \n"
     )
     print("create / login\n")
     answer = input("What would you like to do? \n").lower()
     user = handle_input(answer)
     return user
+
 
 def create_user():
     """
@@ -173,6 +185,10 @@ def create_user():
     print("\nLets get you started!\n")
     while True:
         username = input("How would you like to be called? \n").lower()
+        if username == "exit":
+            raise SystemExit
+        elif username == "stop":
+            return username
         path = os.path.join(FOLDER_PATH, username) + ".pkl"
         if os.path.exists(path):
             print("Sorry username is already taken. Try another one!\n")
@@ -201,16 +217,21 @@ def generate_password():
     """
     Requesting instructions for configuring a password, generate a new password and store it within a class instance.
     """
+    global user
     print("\nFor which platform would you like to generate a new password?\n")
     while True:
         new_platform = input("Platform: \n").lower()
-
-        if new_platform.isalpha():
+        if new_platform == "exit":
+            raise SystemExit
+        elif new_platform == "stop":
+            return new_platform
+        elif new_platform.isalpha():
             break
         elif not new_platform.strip():
             print("Input cannot be empty. Please enter some text.")
         else:
             print("Invalid input. Please enter alphabetic characters.")
+
 
     print("How strong do you want your password to be?\n")
     print("weak/mediocre/strong\n")
@@ -260,22 +281,26 @@ def main():
     """
     Runs the main loop of the program
     """
-    user = display_main_menu()
     while True:
-        print(f"Hello {user.username}.\nWhat would you like to do next?\n")
-        print(
-            """Avaiable options:
-            1. Display saved password: saved
-            2. Generate new password: generate
-            3. Exit the program: exit
-            4. Return to main menu: main: stop\n"""
-        )
-        answer = input("Keyword : \n")
-        if answer == "exit":
-            print(f"Goodbye, {user.username}")
-            break
-        handle_input(answer)
-    return
+        user = display_main_menu()
+        if user == "stop":
+            continue
+        while True:
+            print(f"Hello {user.username}.\nWhat would you like to do next?\n")
+            print(
+                """Avaiable options:
+                1. Display saved password: saved
+                2. Generate new password: generate
+                3. Exit the program: exit
+                4. Return to main menu main: stop\n"""
+            )
+            answer = input("Keyword : \n")
+            handle_input(answer, 2)
+            if answer == "exit":
+                print(f"Goodbye, {user.username}")
+                raise SystemExit
+            elif answer == "stop":
+                break
 
 
 main()

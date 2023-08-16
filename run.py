@@ -126,28 +126,48 @@ def handle_input(answer, stage=0, username=None):
             retry = input("Please try again: \n").lower()
     elif stage == 2:
         if answer == "saved":
-            if len(user.gen_passwords) == 0:
-                print("\nNo saved passwords found. Lets change that!\n")
-                new_entry = generate_password()
-                if new_entry == "stop":
+            saved = True
+            while saved:
+                if len(user.gen_passwords) == 0:
+                    print("\nNo saved passwords found. Lets change that!\n")
+                    new_entry = generate_password()
+                    if new_entry == "stop":
+                        return
+                    print("\nUpdating data base...\n")
+                    user.gen_passwords.update(new_entry)
+                    user.save_to()
+                    print("Data base updated successfully!\n")
                     return
-                print("\nUpdating data base...\n")
-                user.gen_passwords.update(new_entry)
-                user.save_to()
-                print("Data base updated successfully!\n")
-                return
-            else:
-                print(
-                    "\nWhich password would you like to retreve? For which platform?\n"
-                )
-                print("These are the platforms you have generated a password for : \n")
-                for key in user.gen_passwords.keys():
-                    print(f"{key}")
-                platform = input("Your choise: \n")
-                print(
-                    f"\nYour password for {platform} is:\n{user.gen_passwords.get(platform)}\n"
-                )
-                return
+                else:
+                    print(
+                        "\nWhich password would you like to retreve? For which platform?\n"
+                    )
+                    print("If you would like to delete stored password type in 'delete'\n")
+                    while True:
+                        print("These are the platforms you have generated a password for : \n")
+                        for key in user.gen_passwords.keys():
+                            print(f"{key}")
+                        platform = input("\nKeyword: \n")
+                        if platform == "delete":
+                            print("Which password would you like to delete?\n")
+                            platform = input("Platform: \n")
+                            del user.gen_passwords[platform]
+                            print(f"{platform} has been succesfully removed!\n")
+                            user.save_to()
+                            continue
+                        elif platform == "stop":
+                            break
+                        elif platform == "exit":
+                            raise SystemExit
+                        elif platform not in user.gen_passwords.keys():
+                            print(f"You dont have a stored password for {platform} platform!\n")
+                            continue
+                        else:
+                            print(
+                                f"\nYour password for {platform} is:\n{user.gen_passwords.get(platform)}\n"
+                            )
+                            break    
+                    return
         elif answer == "generate":
             new_entry = generate_password()
             if new_entry == "stop":
@@ -219,6 +239,7 @@ def generate_password():
     """
     global user
     print("\nFor which platform would you like to generate a new password?\n")
+    print("NOTE that if you try to generate 2 passwords under the same platform name IT WILL OVERWRITE your old platform assoiseted with that platform name. ")
     while True:
         new_platform = input("Platform: \n").lower()
         if new_platform == "exit":

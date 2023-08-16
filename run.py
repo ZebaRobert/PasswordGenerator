@@ -1,5 +1,4 @@
 import pickle
-import hashlib
 import os
 import string
 import random

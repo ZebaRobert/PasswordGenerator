@@ -123,7 +123,7 @@ or 'exit' to close the program."""
                         return
                 if username == "exit":
                     raise SystemExit
-                display_main_menu()
+                return answer
             elif answer == "new":
                 user = create_user()
                 return user
@@ -353,7 +353,7 @@ def main():
     """
     while True:
         user = display_main_menu()
-        if user == "stop":
+        if user == "stop" or user == "delete":
             continue
         while True:
             print(f"Hello {user.username}.\nWhat would you like to do next?\n")
